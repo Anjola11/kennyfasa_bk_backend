@@ -60,8 +60,6 @@ class ProductServices():
             )
         
     async def get_all_products(self, session:AsyncSession, user_id):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Product).options(selectinload(Product.sizes))
 
         try:
@@ -78,8 +76,6 @@ class ProductServices():
             )
         
     async def get_product_by_id(self, product_id:uuid.UUID, session:AsyncSession, user_id):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Product).where(Product.id == product_id).options(selectinload(Product.sizes))
 
         try:

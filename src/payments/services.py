@@ -98,8 +98,6 @@ class PaymentServices:
                     )
     
     async def get_all_payments(self, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Payment)
 
         try:
@@ -116,8 +114,6 @@ class PaymentServices:
             )
         
     async def get_payment_by_id(self, payment_id: uuid.UUID, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Payment).where(Payment.id == payment_id)
 
         try:
@@ -140,10 +136,7 @@ class PaymentServices:
             )
         
     async def get_customer_payments_history(self, customer_id: uuid.UUID, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
-        # Multi-tenancy: ensure customer belongs to current user
-        user_uuid = uuid.UUID(user_id)
+        # Multi-tenancy: ensure customer exists
         customer = (await session.exec(select(Customer).where(Customer.id == customer_id))).first()
 
         if not customer:

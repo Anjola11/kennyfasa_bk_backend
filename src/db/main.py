@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 engine = create_async_engine(
     url=Config.DATABASE_URL,
-    echo=True, 
+    echo=False, 
 )
 
 async def init_db():

@@ -178,8 +178,6 @@ class SaleServices:
             )
         
     async def get_all_sales(self, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Sale).options(selectinload(Sale.items))
 
         try:
@@ -198,8 +196,6 @@ class SaleServices:
 
         
     async def get_sale_by_id(self, sale_id: uuid.UUID, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Sale).where(Sale.id == sale_id).options(selectinload(Sale.items))
 
         try:

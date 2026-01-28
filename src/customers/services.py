@@ -40,8 +40,6 @@ class CustomerServices():
             )
         
     async def get_all_customers(self, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Customer)
 
         try:
@@ -58,8 +56,6 @@ class CustomerServices():
             )
         
     async def get_customer_by_id(self, customer_id: uuid.UUID, session: AsyncSession, user_id: str):
-        await authServices.check_user_exists(user_id, session)
-
         statement = select(Customer).where(Customer.id == customer_id)
 
         try:
