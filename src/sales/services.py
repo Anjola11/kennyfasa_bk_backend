@@ -76,15 +76,6 @@ class SaleServices:
         # Still stamp the creator's user_id for auditability (not used for read restrictions)
         sale_dict["user_id"] = user_uuid
 
-        # Calculate Status
-        if upfront_payment >= total_amount:
-            sale_dict["status"] = SaleStatus.FULLY_PAID
-            sale_dict["amount_paid"] = total_amount
-        elif upfront_payment > 0:
-            sale_dict["status"] = SaleStatus.PARTIALLY_PAID
-        else:
-            sale_dict["status"] = SaleStatus.UNPAID
-
         # Use with_for_update() to prevent race conditions on balance updates
         # Company-wide access: do not restrict customers by user_id (for now)
         customer_statement = select(Customer).where(Customer.id == sale_dict["customer_id"]).with_for_update()
@@ -97,24 +88,48 @@ class SaleServices:
                 detail="customer not found"
             )
         
-        net_charge = upfront_payment - total_amount
+        # Calculate effective payment: upfront payment + any existing credit balance
+        effective_payment = upfront_payment + customer.credit_balance
+        
+        # Calculate how much can be applied to THIS sale
+        amount_applied_to_sale = min(effective_payment, total_amount)
+        credit_used_for_sale = max(Decimal("0.0"), amount_applied_to_sale - upfront_payment)
+        
+        # Calculate Status based on effective payment (upfront + credit)
+        if amount_applied_to_sale >= total_amount:
+            sale_dict["status"] = SaleStatus.FULLY_PAID
+            sale_dict["amount_paid"] = total_amount
+        elif amount_applied_to_sale > 0:
+            sale_dict["status"] = SaleStatus.PARTIALLY_PAID
+            sale_dict["amount_paid"] = amount_applied_to_sale
+        else:
+            sale_dict["status"] = SaleStatus.UNPAID
+            sale_dict["amount_paid"] = Decimal("0.0")
 
-        effective_balance = net_charge + customer.credit_balance
-
-        if effective_balance >= 0:
+        # Update global balances
+        # Remaining effective payment after paying this sale
+        remaining_effective = effective_payment - amount_applied_to_sale
+        
+        # Debt from this sale (if any)
+        new_debt_from_sale = total_amount - amount_applied_to_sale
+        
+        if remaining_effective > 0:
+            # They have leftover after paying this sale
             if customer.total_debt > 0:
-                if effective_balance >= customer.total_debt:
-                    remaining_credit = effective_balance - customer.total_debt
+                # Apply remaining to existing debt
+                if remaining_effective >= customer.total_debt:
+                    leftover_credit = remaining_effective - customer.total_debt
                     customer.total_debt = Decimal("0.0")
-                    customer.credit_balance = remaining_credit
+                    customer.credit_balance = leftover_credit
                 else:
-                    customer.total_debt -= effective_balance
+                    customer.total_debt -= remaining_effective
                     customer.credit_balance = Decimal("0.0")
             else:
-                customer.credit_balance = effective_balance
+                customer.credit_balance = remaining_effective
         else:
+            # No remaining effective payment
             customer.credit_balance = Decimal("0.0")
-            customer.total_debt += abs(effective_balance)
+            customer.total_debt += new_debt_from_sale
 
         #Create Sale Instance
         new_sale = Sale(**sale_dict)
@@ -123,27 +138,30 @@ class SaleServices:
 
         #Handle Upfront Payment & Audit Trail
         if upfront_payment > 0:
-            # Create a formal payment record
+            # Create a formal payment record for the cash payment
             new_payment = Payment(
                 customer_id=customer.id,
-                user_id=user_uuid,  # Multi-tenancy
+                user_id=user_uuid,
                 amount=upfront_payment,
-                payment_type=sale.payment_type # Use provided payment type
+                payment_type=sale.payment_type
             )
             session.add(new_payment)
 
             await session.flush() 
 
-            # Calculate how much of this specific cash amount actually applies to THIS sale
-            # (If they overpaid, only the portion matching total_amount is linked)
-            applied_to_sale = min(upfront_payment, total_amount)
+            # Link the upfront payment portion to this sale
+            applied_from_upfront = min(upfront_payment, total_amount)
 
             new_link = SalePaymentLink(
                 sale_id=new_sale.id,
                 payment_id=new_payment.id,
-                amount_applied=applied_to_sale
+                amount_applied=applied_from_upfront
             )
             session.add(new_link)
+        
+        # If credit was used, we need to flush to get sale ID for linking
+        if credit_used_for_sale > 0 and upfront_payment == 0:
+            await session.flush()
 
         try:
             await session.commit()
