@@ -88,8 +88,9 @@ class AuthServices:
             HTTPException: If credentials invalid or username not verified.
         """
         
-        # Query user by username using Helper
-        user = await self.get_user_by_username(loginInput.username, session)
+        # Query user by username using Helper (case-insensitive: convert to lowercase)
+        username_lower = loginInput.username.lower()
+        user = await self.get_user_by_username(username_lower, session)
         
         # Reusable exception for invalid credentials
         INVALID_CREDENTIALS = HTTPException(

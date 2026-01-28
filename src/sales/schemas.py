@@ -11,6 +11,7 @@ class Sale(BaseModel):
     customer_id: uuid.UUID 
     total_amount: Decimal
     amount_paid: Decimal
+    credit_applied: Decimal = Decimal("0.00")
     payment_type: Optional[PaymentType] = None
     status: SaleStatus
     items: Optional[List["SaleItem"]] = []

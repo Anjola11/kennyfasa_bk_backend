@@ -105,6 +105,9 @@ class SaleServices:
         else:
             sale_dict["status"] = SaleStatus.UNPAID
             sale_dict["amount_paid"] = Decimal("0.0")
+        
+        # Store how much credit was applied to this sale
+        sale_dict["credit_applied"] = credit_used_for_sale
 
         # Update global balances
         # Remaining effective payment after paying this sale
