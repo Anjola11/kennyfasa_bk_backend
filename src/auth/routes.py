@@ -32,7 +32,7 @@ authRouter = APIRouter()
 authServices = AuthServices()
 security = HTTPBearer(auto_error=False)
 
-IS_PRODUCTION = False # Set this via environment variable in real usage
+IS_PRODUCTION = True # Set this via environment variable in real usage
 
 cookie_settings = {
     "httponly": True,
