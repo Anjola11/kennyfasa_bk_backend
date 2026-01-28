@@ -8,6 +8,7 @@ from src.products.extracted_prices import PRINTING_PRICES, BORDERLESS_BOARD_PRIC
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
 # IMPORTANT: SET THE USER_ID TO THE ACCOUNT YOU WANT TO SEED
 TARGET_USER_ID = os.getenv('SEED_USER_ID')
 
