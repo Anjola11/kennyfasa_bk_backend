@@ -11,6 +11,7 @@ class Sale(BaseModel):
     customer_id: uuid.UUID 
     total_amount: Decimal
     amount_paid: Decimal
+    payment_type: Optional[PaymentType] = None
     status: SaleStatus
     items: Optional[List["SaleItem"]] = []
     created_at: datetime
@@ -18,7 +19,7 @@ class Sale(BaseModel):
 class SaleInput(BaseModel):
     customer_id: uuid.UUID 
     amount_paid: Decimal
-    payment_type: PaymentType
+    payment_type: Optional[PaymentType] = None
     items: Optional[List["SaleItemInput"]] = []
 
 

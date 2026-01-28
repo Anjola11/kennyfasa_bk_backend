@@ -27,7 +27,7 @@ class Sale(SQLModel, table=True):
     
     total_amount: Decimal = Field(default=Decimal("0.00"), decimal_places=2)
     amount_paid: Decimal = Field(default=Decimal("0.00"), decimal_places=2)
-    payment_type: PaymentType
+    payment_type: Optional[PaymentType] = Field(default=None)
     status: SaleStatus = Field(default=SaleStatus.UNPAID, index=True)
      
     created_at: datetime = Field(
