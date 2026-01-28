@@ -5,9 +5,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import async_session_maker
 from src.products.models import Product, ProductSizes, Category
 from src.products.extracted_prices import PRINTING_PRICES, BORDERLESS_BOARD_PRICES, FRAME_PRICES, MISC_PRICES
+import os
+from dotenv import load_dotenv
 
 # IMPORTANT: SET THE USER_ID TO THE ACCOUNT YOU WANT TO SEED
-TARGET_USER_ID = "a407106f-0a5c-4444-a3f7-e211bd077a9d"
+TARGET_USER_ID = os.getenv('SEED_USER_ID')
 
 async def seed_data():
     if TARGET_USER_ID == "YOUR_USER_ID_HERE":
