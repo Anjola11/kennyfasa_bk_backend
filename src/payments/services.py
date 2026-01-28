@@ -32,22 +32,6 @@ class PaymentServices:
                     detail="Customer not found"
                     )
 
-            #Update Global Balances (Seesaw Logic)
-            payment_amount = payment_dict["amount"]
-            effective_balance = payment_amount + customer.credit_balance
-
-            if customer.total_debt > 0:
-                if effective_balance >= customer.total_debt:
-                    effective_balance -= customer.total_debt
-                    customer.total_debt = Decimal("0.0")
-                    customer.credit_balance = effective_balance
-                else:
-                    customer.total_debt -= effective_balance
-                    customer.credit_balance = Decimal("0.0")
-            else:
-                customer.credit_balance = effective_balance
-
-        
             # Fetch unpaid sales OLDEST first 
             sales_statement = select(Sale).where(
                 Sale.customer_id == customer.id, 
@@ -60,8 +44,12 @@ class PaymentServices:
             new_payment = Payment(**payment_dict, user_id=user_uuid)
             session.add(new_payment)
             
-            await session.flush() 
-            amount_to_allocate = payment_amount 
+            await session.flush()
+            
+            # Calculate effective balance: payment + any existing credit
+            payment_amount = payment_dict["amount"]
+            amount_to_allocate = payment_amount + customer.credit_balance
+            total_allocated = Decimal("0.0")
 
             for sale in unpaid_sales:
                 if amount_to_allocate <= 0:
@@ -83,11 +71,20 @@ class PaymentServices:
                 # Update the Sale record
                 sale.amount_paid += applied
                 amount_to_allocate -= applied
+                total_allocated += applied
 
                 if sale.amount_paid >= sale.total_amount:
                     sale.status = SaleStatus.FULLY_PAID
                 else:
                     sale.status = SaleStatus.PARTIALLY_PAID
+            
+            # Update Global Balances based on actual allocations
+            # total_allocated is what was applied to debts
+            # amount_to_allocate is leftover (becomes credit_balance)
+            customer.total_debt = customer.total_debt - total_allocated
+            if customer.total_debt < Decimal("0.0"):
+                customer.total_debt = Decimal("0.0")
+            customer.credit_balance = amount_to_allocate if amount_to_allocate > 0 else Decimal("0.0")
 
             try:
                 await session.commit()
