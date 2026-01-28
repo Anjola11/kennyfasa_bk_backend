@@ -1,0 +1,90 @@
+# stand-alone extracted prices from images
+
+# Actual Printing Prices (Standard)
+PRINTING_PRICES = [
+    {"size": "5x7", "price": 250},
+    {"size": "8x10", "price": 600},
+    {"size": "8x12", "price": 650},
+    {"size": "8x14", "price": 700},
+    {"size": "10x12", "price": 800},
+    {"size": "8x16", "price": 850},
+    {"size": "11x13", "price": 900},
+    {"size": "12x16", "price": 1100},
+    {"size": "13x15", "price": 1200},
+    {"size": "12x18", "price": 1400},
+    {"size": "16x20", "price": 1600},
+    {"size": "16x24", "price": 2400},
+    {"size": "20x24", "price": 3200},
+    {"size": "16x30", "price": 3200},
+    {"size": "20x30", "price": 4500},
+    {"size": "24x30", "price": 5000},
+    {"size": "24x36", "price": 5500},
+    {"size": "24x48", "price": 7000},
+    {"size": "24x60", "price": 10000},
+    {"size": "24x72", "price": 12000},
+    {"size": "30x60", "price": 13000},
+    {"size": "30x72", "price": 15000},
+    {"size": "36x72", "price": 16000},
+    {"size": "40x60", "price": 17000},
+    {"size": "40x75", "price": 18000},
+]
+
+# Borderless Board Prices
+BORDERLESS_BOARD_PRICES = [
+    {"size": "5x7", "price": 300},
+    {"size": "8x10", "price": 700},
+    {"size": "8x12", "price": 750},
+    {"size": "8x14", "price": 900},
+    {"size": "10x12", "price": 1000},
+    {"size": "8x16", "price": 1100},
+    {"size": "11x13", "price": 1250},
+    {"size": "12x16", "price": 1400},
+    {"size": "13x15", "price": 1500},
+    {"size": "12x18", "price": 2000},
+    {"size": "16x20", "price": 2400},
+    {"size": "16x24", "price": 3000},
+    {"size": "20x24", "price": 3600},
+    {"size": "16x30", "price": 3600},
+    {"size": "20x30", "price": 4800},
+    {"size": "24x30", "price": 5000},
+    {"size": "24x36", "price": 7000},
+    {"size": "24x48", "price": 9000},
+    {"size": "24x60", "price": 11000},
+    {"size": "24x72", "price": 13500},
+    {"size": "30x60", "price": 14400},
+    {"size": "30x72", "price": 17000},
+    {"size": "36x72", "price": 20500},
+    {"size": "40x60", "price": 19500},
+    {"size": "40x75", "price": 24000},
+]
+
+# Picture Frame Prices (Tiny, Versace, Normal)
+FRAME_PRICES = [
+    {"size": "12x16", "tiny": 3200, "versace": 3200, "normal": 4800},
+    {"size": "16x20", "tiny": 4200, "versace": 4400, "normal": 6000},
+    {"size": "10x12", "tiny": 2900, "versace": 3000, "normal": 3500},
+    {"size": "8x10", "tiny": 2200, "versace": 2300, "normal": 2500},
+    {"size": "16x24", "tiny": 4500, "versace": 4600, "normal": 6500},
+    {"size": "20x30", "tiny": 7400, "versace": None, "normal": 9300},
+    {"size": "24x36", "tiny": None, "versace": None, "normal": 10800},
+    {"size": "20x24", "tiny": 5500, "versace": None, "normal": 7500},
+]
+
+# Additional Miscellaneous Prices
+MISC_PRICES = [
+    {"name": "Hook", "size": "Two Pieces", "price": 50},
+    {"name": "Hanger", "size": "Three Pieces", "price": 50},
+    {"name": "Banner", "size": "2x3 ft", "price": 750},
+    {"name": "Banner", "size": "2x4 ft", "price": 1000},
+    {"name": "Banner", "size": "3x5 ft", "price": 1250},
+    {"name": "Banner", "size": "3x6 ft", "price": 1500},
+    {"name": "Banner", "size": "4x8 ft", "price": 2000},
+    {"name": "Banner", "size": "Per Foot", "price": 250},
+    {"name": "Sticker", "size": "0.5 Yard", "price": 1250},
+    {"name": "Sticker", "size": "1 Yard", "price": 2500},
+    {"name": "Sticker", "size": "2 Yards", "price": 5000},
+    {"name": "Sticker", "size": "3 Yards", "price": 7500},
+    {"name": "Sticker", "size": "5 Yards", "price": 12500},
+    {"name": "Sticker", "size": "10 Yards", "price": 25000},
+    {"name": "Sticker", "size": "Per Yard", "price": 2500},
+]

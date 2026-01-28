@@ -1,0 +1,53 @@
+# ---- Python Core ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.db
+*.sqlite3
+
+# ---- Virtual Environment (Critical for uv) ----
+# uv creates this folder to store your libraries
+.venv/
+venv/
+env/
+ENV/
+
+# ---- uv Specific ----
+# specific local python version configurations (optional to ignore, usually committed)
+# .python-version
+
+# ---- FastAPI / General ----
+*.log
+*.pid
+*.out
+*.gz
+
+# ---- IDE / Editors ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+
+# ---- Testing / Coverage ----
+.coverage
+htmlcov/
+.cache/
+.pytest_cache/
+*.pytest_cache/
+
+# ---- Build & Distribution (Important for uv builds) ----
+# uv handles builds, so these folders might appear
+dist/
+build/
+*.egg-info/
+
+# ---- Environment variables (Security) ----
+.env
+.env.local
+.env.*
