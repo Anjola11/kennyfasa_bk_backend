@@ -37,7 +37,7 @@ IS_PRODUCTION = True # Set this via environment variable in real usage
 cookie_settings = {
     "httponly": True,
     "secure": IS_PRODUCTION,  # False for local HTTP, True for production HTTPS
-    "samesite": "Lax" if not IS_PRODUCTION else "None"
+    "samesite": "Lax" if not IS_PRODUCTION else "none"
 }
 
 
