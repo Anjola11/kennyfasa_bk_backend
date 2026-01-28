@@ -52,6 +52,8 @@ origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "https://kennyfasa-bk-frontend.vercel.app",
+    "https://kennyfasa-bk-frontend-git-main-aladeniyi-aanus-projects.vercel.app",
+    "https://kennyfasa-bk-frontend-icktc645o-aladeniyi-aanus-projects.vercel.app",
 ]
 
 app.add_middleware(
