@@ -30,6 +30,48 @@ class AnalyticsServices:
             total_customers=customers_result.first() or 0
         )
 
+    async def get_sales_trend(self, session: AsyncSession, days: int = 30) -> List[SalesTrendItem]:
+        """Get daily sales trend for the last N days.
+        
+        Returns sales amount per day, including days with zero sales.
+        """
+        # Calculate date range
+        end_date = date.today()
+        start_date = end_date - timedelta(days=days - 1)
+        
+        # Query to get sales grouped by date
+        # Use func.date() to extract just the date portion from created_at timestamp
+        stmt = (
+            select(
+                func.date(Sale.created_at).label("sale_date"),
+                func.sum(Sale.total_amount).label("total")
+            )
+            .where(func.date(Sale.created_at) >= start_date)
+            .where(func.date(Sale.created_at) <= end_date)
+            .group_by(func.date(Sale.created_at))
+            .order_by(func.date(Sale.created_at))
+        )
+        
+        result = await session.exec(stmt)
+        rows = result.all()
+        
+        # Create a dictionary of date -> sales_amount from query results
+        sales_dict = {row.sale_date: row.total for row in rows}
+        
+        # Fill in all dates in range, including those with zero sales
+        trend_data = []
+        current_date = start_date
+        while current_date <= end_date:
+            trend_data.append(
+                SalesTrendItem(
+                    date=current_date,
+                    sales_amount=sales_dict.get(current_date, Decimal("0.0"))
+                )
+            )
+            current_date += timedelta(days=1)
+        
+        return trend_data
+
 
     async def get_product_performance(self, session: AsyncSession, user_id: str, limit: int = 10) -> List[ProductPerformanceItem]:
         stmt = (

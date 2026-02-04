@@ -26,7 +26,7 @@ async def get_sales_trend(
 ):
     """Get sales revenue trend over a specific number of days."""
     user_id = current_user.get("user_id")
-    return await analytics_services.get_sales_trend(session, user_id, days)
+    return await analytics_services.get_sales_trend(session, days)
 
 @analytics_router.get("/product-performance", response_model=List[ProductPerformanceItem])
 async def get_product_performance(
