@@ -194,7 +194,7 @@ class SaleServices:
 
         try:
             results = await session.exec(query)
-            sales = results.scalars().all()
+            sales = results.all()
 
             total_count_result = await session.exec(count_query)
             total_count = total_count_result.one()

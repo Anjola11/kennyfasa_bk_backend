@@ -110,7 +110,7 @@ class PaymentServices:
         count_query = select(func.count()).select_from(base_statement.subquery())
         try:
             result = await session.exec(query)
-            payments = result.scalars().all()
+            payments = result.all()
 
 
             total_count_result = await session.exec(count_query)
@@ -176,7 +176,7 @@ class PaymentServices:
 
         try:
             result = await session.exec(query)
-            payments = result.scalars().all()
+            payments = result.all()
 
 
             total_count_result = await session.exec(count_query)
