@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from decimal import Decimal
 from src.auth.services import AuthServices
 from src.payments.models import Payment, SalePaymentLink
-from src.utils.pagination import PaginationParameters, pagination, SortEnum,PaginatedResponse
+from src.utils.pagination import PaginationParameters, SortEnum,PaginatedResponse
 
 
 authServices = AuthServices()
