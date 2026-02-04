@@ -89,7 +89,9 @@ async def loginUser(
 
 
 @authRouter.get("/me", status_code=status.HTTP_200_OK)
+@limiter.limit("60/minute")
 async def get_me(
+    request: Request,
     user_info: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_Session)
 ):

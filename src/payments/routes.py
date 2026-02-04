@@ -18,7 +18,7 @@ security = HTTPBearer(auto_error=False)
 
 
 @payment_router.post("/", response_model=PaymentResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def add_payment(
     request: Request,
     response: Response,
@@ -38,7 +38,7 @@ async def add_payment(
 
 
 @payment_router.get("/", response_model=PaymentListResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_all_payments(
     request: Request,
     response: Response,
@@ -58,7 +58,7 @@ async def get_all_payments(
 
 
 @payment_router.get("/{id}", response_model=PaymentResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_payment(
     request: Request,
     response: Response,
@@ -78,7 +78,7 @@ async def get_payment(
 
 
 @payment_router.get("/customer/{customer_id}", response_model=PaymentListResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_customer_payments(
     request: Request,
     response: Response,

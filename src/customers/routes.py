@@ -18,7 +18,7 @@ security = HTTPBearer(auto_error=False)
 
 
 @customer_router.post("/", response_model=CustomerResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_customer(
     request: Request,
     response: Response,
@@ -37,7 +37,7 @@ async def create_customer(
     }
 
 @customer_router.get("/", response_model=CustomerListResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_all_customer(
     request: Request,
     response: Response,
@@ -56,7 +56,7 @@ async def get_all_customer(
 
 
 @customer_router.get("/{id}", response_model=CustomerResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_customer(
     request: Request,
     response: Response,
@@ -76,7 +76,7 @@ async def get_customer(
 
 
 @customer_router.patch("/{id}", response_model=CustomerResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def update_customer(
     request: Request,
     response: Response,
@@ -97,7 +97,7 @@ async def update_customer(
 
 
 @customer_router.delete("/{id}", status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def delete_customer(
     request: Request,
     response: Response,

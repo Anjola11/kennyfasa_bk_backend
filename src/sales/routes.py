@@ -20,7 +20,7 @@ security = HTTPBearer(auto_error=False)
 
 
 @sale_router.post("/", response_model=SaleResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 async def create_sale(
     request: Request,
     response: Response,
@@ -40,7 +40,7 @@ async def create_sale(
 
 
 @sale_router.get("/", response_model=SaleListResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_all_sales(
     request: Request,
     response: Response,
@@ -60,7 +60,7 @@ async def get_all_sales(
 
 
 @sale_router.get("/{id}", response_model=SaleResponse, status_code=status.HTTP_200_OK)
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def get_sale(
     request: Request,
     response: Response,
