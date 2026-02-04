@@ -5,6 +5,7 @@ from src.sales.models import SaleStatus
 from datetime import datetime
 from typing import Optional, List
 from src.payments.models import PaymentType
+from src.utils.pagination import PaginatedResponse
 
 class Sale(BaseModel):
     id: uuid.UUID 
@@ -51,4 +52,4 @@ class SaleResponse(BaseModel):
 class SaleListResponse(BaseModel):
     success: bool
     message: str
-    data: List[Sale]
+    data: PaginatedResponse[Sale]

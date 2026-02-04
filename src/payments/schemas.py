@@ -4,6 +4,7 @@ from decimal import Decimal
 from src.payments.models import PaymentType
 from datetime import datetime
 from typing import List
+from src.utils.pagination import PaginatedResponse
 
 class Payment(BaseModel):
     id: uuid.UUID
@@ -25,4 +26,4 @@ class PaymentResponse(BaseModel):
 class PaymentListResponse(BaseModel):
     success: bool
     message: str
-    data: List[Payment]
+    data: PaginatedResponse[Payment]

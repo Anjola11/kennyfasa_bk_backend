@@ -6,9 +6,10 @@ from src.payments.schemas import (
 from src.payments.services import PaymentServices
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_Session
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from src.utils.limiter import limiter
 import uuid
+from src.utils.pagination import PaginationParameters
 
 
 payment_router = APIRouter()
@@ -41,12 +42,13 @@ async def add_payment(
 async def get_all_payments(
     request: Request,
     response: Response,
+    params: PaginationParameters = Depends(),
     session: AsyncSession = Depends(get_Session),
     user_details: dict = Depends(get_current_user)
 ):
     user_id = user_details.get("user_id")
 
-    payments = await payment_services.get_all_payments(session, user_id)
+    payments = await payment_services.get_all_payments(session, params)
 
     return {
         "success": True,
@@ -66,7 +68,7 @@ async def get_payment(
 ):
     user_id = user_details.get("user_id")
 
-    payment = await payment_services.get_payment_by_id(id, session, user_id)
+    payment = await payment_services.get_payment_by_id(id, session)
 
     return {
         "success": True,
@@ -81,12 +83,13 @@ async def get_customer_payments(
     request: Request,
     response: Response,
     customer_id: uuid.UUID,
+    params: PaginationParameters = Depends(),
     session: AsyncSession = Depends(get_Session),
     user_details: dict = Depends(get_current_user)
 ):
     user_id = user_details.get("user_id")
 
-    payments = await payment_services.get_customer_payments_history(customer_id, session, user_id)
+    payments = await payment_services.get_customer_payments_history(customer_id, session, params)
 
     return {
         "success": True,

@@ -3,7 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.sales.models import Sale, SaleItem, SaleStatus
 from src.products.models import Product, ProductSizes
 from src.customers.models import Customer
-from sqlmodel import select
+from sqlmodel import select, func, asc, desc
 from fastapi import HTTPException, status
 from sqlalchemy.exc import DatabaseError
 import uuid
@@ -11,6 +11,9 @@ from sqlalchemy.orm import selectinload
 from decimal import Decimal
 from src.auth.services import AuthServices
 from src.payments.models import Payment, SalePaymentLink
+from src.utils.pagination import PaginationParameters, pagination, SortEnum,PaginatedResponse
+
+
 authServices = AuthServices()
 
 class SaleServices:
@@ -76,7 +79,7 @@ class SaleServices:
         # Still stamp the creator's user_id for auditability (not used for read restrictions)
         sale_dict["user_id"] = user_uuid
 
-        # Use with_for_update() to prevent race conditions on balance updates
+        # Used with_for_update() to prevent race conditions on balance updates
         # Company-wide access: do not restrict customers by user_id (for now)
         customer_statement = select(Customer).where(Customer.id == sale_dict["customer_id"]).with_for_update()
         customer_result = await session.exec(customer_statement)
@@ -177,14 +180,33 @@ class SaleServices:
                 detail="failed to create sale"
             )
         
-    async def get_all_sales(self, session: AsyncSession, user_id: str):
-        statement = select(Sale).options(selectinload(Sale.items))
+    async def get_all_sales(self, session: AsyncSession, params: PaginationParameters):
+        base_statement = select(Sale).options(selectinload(Sale.items))
+        order = desc if params.order == SortEnum.DESCENDING else asc
+        query = (
+            base_statement
+            .limit(params.per_page)
+            .offset((params.page - 1) * params.per_page)
+            .order_by(order(Sale.created_at))
+        )
+
+        count_query = select(func.count()).select_from(base_statement.subquery())
 
         try:
-            result = await session.exec(statement)
-            sales = result.all()
+            results = await session.exec(query)
+            sales = results.scalars().all()
 
-            return sales
+            total_count_result = await session.exec(count_query)
+            total_count = total_count_result.one()
+
+            return PaginatedResponse(
+                items=sales,
+                total_count=total_count,
+                page=params.page,
+                per_page=params.per_page
+            )
+
+
         
         except DatabaseError:
             await session.rollback()
@@ -195,7 +217,7 @@ class SaleServices:
         
 
         
-    async def get_sale_by_id(self, sale_id: uuid.UUID, session: AsyncSession, user_id: str):
+    async def get_sale_by_id(self, sale_id: uuid.UUID, session: AsyncSession):
         statement = select(Sale).where(Sale.id == sale_id).options(selectinload(Sale.items))
 
         try:

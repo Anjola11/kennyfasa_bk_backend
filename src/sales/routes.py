@@ -11,6 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from src.utils.limiter import limiter
 import uuid
+from src.utils.pagination import PaginationParameters
 
 
 sale_router = APIRouter()
@@ -43,12 +44,13 @@ async def create_sale(
 async def get_all_sales(
     request: Request,
     response: Response,
+    params: PaginationParameters = Depends(),
     session: AsyncSession = Depends(get_Session),
     user_details: dict = Depends(get_current_user)
 ):
     user_id = user_details.get("user_id")
 
-    sales = await sale_services.get_all_sales(session, user_id)
+    sales = await sale_services.get_all_sales(session, params)
 
     return {
         "success": True,
@@ -68,7 +70,7 @@ async def get_sale(
 ):
     user_id = user_details.get("user_id")
 
-    sale = await sale_services.get_sale_by_id(id, session, user_id)
+    sale = await sale_services.get_sale_by_id(id, session)
 
     return {
         "success": True,

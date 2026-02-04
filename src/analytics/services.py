@@ -30,33 +30,6 @@ class AnalyticsServices:
             total_customers=customers_result.first() or 0
         )
 
-    async def get_sales_trend(self, session: AsyncSession, user_id: str, days: int = 30) -> List[SalesTrendItem]:
-        start_date = date.today() - timedelta(days=days-1)
-        
-        # Casting created_at as date for grouping
-        # We'll use a slightly safer approach for SQLModel/Postgres/SQLite compatibility
-        # If using Postgres, func.date(Sale.created_at) works. For SQLite, func.date(Sale.created_at) also works.
-        stmt = (
-            select(func.date(Sale.created_at).label("day"), func.sum(Sale.total_amount).label("total"))
-            .where(Sale.created_at >= datetime.combine(start_date, datetime.min.time()))
-            .group_by("day")
-            .order_by("day")
-        )
-        
-        result = await session.exec(stmt)
-        raw_data = result.all()
-        
-        # Fill gaps with zero sales
-        data_map = {row.day: row.total for row in raw_data}
-        trend = []
-        for i in range(days):
-            current = start_date + timedelta(days=i)
-            # func.date returns string in some environments, so we handle both
-            current_str = current.strftime("%Y-%m-%d")
-            amount = data_map.get(current, data_map.get(current_str, Decimal("0.0")))
-            trend.append(SalesTrendItem(date=current, sales_amount=amount))
-            
-        return trend
 
     async def get_product_performance(self, session: AsyncSession, user_id: str, limit: int = 10) -> List[ProductPerformanceItem]:
         stmt = (
