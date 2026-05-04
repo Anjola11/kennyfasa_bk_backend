@@ -13,7 +13,7 @@ from src.products.routes import product_router
 from src.payments.routes import payment_router
 from src.analytics.routes import analytics_router
 from src.utils.limiter import limiter
-
+from src.config import Config
 
 
 
@@ -46,15 +46,7 @@ app.state.limiter = limiter
 
 from fastapi.middleware.cors import CORSMiddleware
 
-origins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "https://kennyfasa-bk-frontend.vercel.app",
-    "https://kennyfasa-bk-frontend-git-main-aladeniyi-aanus-projects.vercel.app",
-    "https://kennyfasa-bk-frontend-icktc645o-aladeniyi-aanus-projects.vercel.app",
-]
+origins = Config.ALLOWED_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,

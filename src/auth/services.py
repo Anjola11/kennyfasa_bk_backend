@@ -119,7 +119,6 @@ class AuthServices:
             **user_dict, 
             'access_token': access_token,  # Will be set in cookies and returned in body
             'refresh_token': refresh_token,  # Will be set in cookies and returned in body
-            
         }
         
         return user_details

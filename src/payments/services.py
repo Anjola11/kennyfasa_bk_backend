@@ -9,7 +9,7 @@ from src.sales.models import Sale, SaleStatus
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.auth.services import AuthServices
 from decimal import Decimal
-from src.utils.pagination import PaginationParameters,PaginatedResponse, SortEnum
+from src.utils.pagination import PaginationParameters,PaginatedResponse, SortEnum, paginate
 
 authServices = AuthServices()
 
@@ -100,34 +100,10 @@ class PaymentServices:
     async def get_all_payments(self, session: AsyncSession, params: PaginationParameters):
         base_statement = select(Payment)
 
-        order = desc if params.order == SortEnum.DESCENDING else asc
-        query = (
-            base_statement
-            .limit(params.per_page)
-            .offset((params.page - 1) * params.per_page)
-            .order_by(order(Payment.created_at))
-        )
-        count_query = select(func.count()).select_from(base_statement.subquery())
-        try:
-            result = await session.exec(query)
-            payments = result.all()
+        paginated_reponse = await paginate(session, Payment, base_statement, params)
 
-
-            total_count_result = await session.exec(count_query)
-            total_count = total_count_result.one()
-            return PaginatedResponse(
-                items=payments,
-                total_count=total_count,
-                page=params.page,
-                per_page=params.per_page
-            )
+        return paginated_reponse
         
-        except DatabaseError:
-            await session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="internal server error"
-            )
         
     async def get_payment_by_id(self, payment_id: uuid.UUID, session: AsyncSession, ):
         statement = select(Payment).where(Payment.id == payment_id)
@@ -164,36 +140,9 @@ class PaymentServices:
         # Filter by user_id for multi-tenancy
         base_statement = select(Payment).where(Payment.customer_id == customer_id)
 
-        order = desc if params.order == SortEnum.DESCENDING else asc
-        query = (
-            base_statement
-            .limit(params.per_page)
-            .offset((params.page - 1) * params.per_page)
-            .order_by(order(Payment.created_at))
-        )
+        paginated_reponse = await paginate(session, Payment, base_statement, params)
 
-        count_query = select(func.count()).select_from(base_statement.subquery())
-
-        try:
-            result = await session.exec(query)
-            payments = result.all()
-
-
-            total_count_result = await session.exec(count_query)
-            total_count = total_count_result.one()
-            return PaginatedResponse(
-                items=payments,
-                total_count=total_count,
-                page=params.page,
-                per_page=params.per_page
-            )
-        
-        except DatabaseError:
-            await session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="internal server error"
-            )
+        return paginated_reponse
         
         
 

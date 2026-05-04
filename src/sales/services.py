@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from decimal import Decimal
 from src.auth.services import AuthServices
 from src.payments.models import Payment, SalePaymentLink
-from src.utils.pagination import PaginationParameters, SortEnum,PaginatedResponse
+from src.utils.pagination import PaginationParameters, SortEnum,PaginatedResponse, paginate
 
 
 authServices = AuthServices()
@@ -182,38 +182,9 @@ class SaleServices:
         
     async def get_all_sales(self, session: AsyncSession, params: PaginationParameters):
         base_statement = select(Sale).options(selectinload(Sale.items))
-        order = desc if params.order == SortEnum.DESCENDING else asc
-        query = (
-            base_statement
-            .limit(params.per_page)
-            .offset((params.page - 1) * params.per_page)
-            .order_by(order(Sale.created_at))
-        )
+        paginated_reponse = await paginate(session, Sale, base_statement, params)
 
-        count_query = select(func.count()).select_from(base_statement.subquery())
-
-        try:
-            results = await session.exec(query)
-            sales = results.all()
-
-            total_count_result = await session.exec(count_query)
-            total_count = total_count_result.one()
-
-            return PaginatedResponse(
-                items=sales,
-                total_count=total_count,
-                page=params.page,
-                per_page=params.per_page
-            )
-
-
-        
-        except DatabaseError:
-            await session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="internal server error"
-            )
+        return paginated_reponse
         
 
         

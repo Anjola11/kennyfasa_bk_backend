@@ -8,6 +8,8 @@ from src.utils.auth import generate_password_hash
 
 async def create_user(username: str, full_name: str, password: str, role: str):
     role_enum = Role.ADMIN if role.lower() == "admin" else Role.STAFF
+    # Normalize username to lowercase (matches login service behaviour)
+    username = username.lower()
     
     async with async_session_maker() as session:
         # Check if user already exists

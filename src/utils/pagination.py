@@ -5,6 +5,7 @@ from src.sales.models import Sale
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import TypeVar, Generic, List, Type, Sequence
 from sqlalchemy.sql.selectable import Select
+from sqlalchemy.exc import DatabaseError
 
 
 T = TypeVar("T", bound=SQLModel)
@@ -26,32 +27,37 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 #work in progress
 
-# async def pagination(
-#         session:AsyncSession,
-#         model: Type[T],
-#         statement: Select[T],
-#         params: PaginationParameters,
-#         sort_column: str = "id"):
-#     order = desc if params.order == SortEnum.DESCENDING else asc
-#     query = (
-#         statement
-#         .limit(params.per_page)
-#         .offset((params.page - 1) * params.per_page)
-#         .order_by(order(getattr(model, sort_column)))
-#         )
+async def paginate(session: AsyncSession, model: Type[T], base_statement: Select, params: PaginationParameters):
     
-#     count_query = select(func.count()).select_from(statement.subquery())
- 
-#     results = await session.exec(query)
-#     items = results.all()
-    
-#     total_count_result = await session.exec(count_query)
-#     total_count = total_count_result.one()
+    order = desc if params.order == SortEnum.DESCENDING else asc
+    query = (
+            base_statement
+            .limit(params.per_page)
+            .offset((params.page - 1) * params.per_page)
+            .order_by(order(getattr(model, "created_at", model.id)))
+        )
+    count_query = select(func.count()).select_from(base_statement.subquery())
 
-#     return PaginatedResponse(
-#         items=items,
-#         total_count=total_count,
-#         page=params.page,
-#         per_page=params.per_page
-#     )
 
+    try:
+        results = await session.exec(query)
+        items = results.all()
+
+        total_count_result = await session.exec(count_query)
+        total_count = total_count_result.one()
+
+        return PaginatedResponse(
+            items=items,
+            total_count=total_count,
+            page=params.page,
+            per_page=params.per_page
+        )
+
+
+        
+    except DatabaseError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="internal server error"
+        )
