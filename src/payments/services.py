@@ -10,6 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.auth.services import AuthServices
 from decimal import Decimal
 from src.utils.pagination import PaginationParameters,PaginatedResponse, SortEnum, paginate
+from src.utils.logger import logger
 
 authServices = AuthServices()
 
@@ -89,8 +90,10 @@ class PaymentServices:
             try:
                 await session.commit()
                 await session.refresh(new_payment)
+                logger.info(f"Payment {new_payment.id} of {payment_amount} added successfully for customer {customer.id} by user {user_id}")
                 return new_payment
-            except Exception:
+            except Exception as e:
+                logger.error(f"Failed to add payment by user {user_id}: {str(e)}", exc_info=True)
                 await session.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
@@ -100,9 +103,15 @@ class PaymentServices:
     async def get_all_payments(self, session: AsyncSession, params: PaginationParameters):
         base_statement = select(Payment)
 
-        paginated_reponse = await paginate(session, Payment, base_statement, params)
-
-        return paginated_reponse
+        try:
+            paginated_reponse = await paginate(session, Payment, base_statement, params)
+            return paginated_reponse
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching all payments: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="internal server error"
+            )
         
         
     async def get_payment_by_id(self, payment_id: uuid.UUID, session: AsyncSession, ):
@@ -120,7 +129,8 @@ class PaymentServices:
 
             return payment
         
-        except DatabaseError:
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching payment {payment_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -140,9 +150,15 @@ class PaymentServices:
         # Filter by user_id for multi-tenancy
         base_statement = select(Payment).where(Payment.customer_id == customer_id)
 
-        paginated_reponse = await paginate(session, Payment, base_statement, params)
-
-        return paginated_reponse
+        try:
+            paginated_reponse = await paginate(session, Payment, base_statement, params)
+            return paginated_reponse
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching payment history for customer {customer_id}: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="internal server error"
+            )
         
         
 

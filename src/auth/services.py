@@ -18,6 +18,7 @@ from src.utils.auth import verify_password_hash, create_token, decode_token
 from datetime import datetime, timezone, timedelta
 import uuid
 from src.db.redis import redis_client
+from src.utils.logger import logger
 
 
 access_token_expiry = timedelta(hours=2)
@@ -45,6 +46,7 @@ class AuthServices:
             result = await session.exec(statement)
             return result.first()
         except DatabaseError as e:
+            logger.error(f"Database error during user lookup for username {username}: {str(e)}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Database error during user lookup: {str(e)}"
@@ -100,6 +102,7 @@ class AuthServices:
 
         # Validate user exists
         if not user:
+            logger.warning(f"Login failed: User {username_lower} not found")
             raise INVALID_CREDENTIALS
         
         
@@ -107,6 +110,7 @@ class AuthServices:
         verified_password = verify_password_hash(loginInput.password, user.password_hash)
 
         if not verified_password:
+            logger.warning(f"Login failed: Incorrect password for user {username_lower}")
             raise INVALID_CREDENTIALS
 
         # Generate authentication tokens for dual-auth delivery
@@ -121,6 +125,7 @@ class AuthServices:
             'refresh_token': refresh_token,  # Will be set in cookies and returned in body
         }
         
+        logger.info(f"User {username_lower} logged in successfully")
         return user_details
     
 
@@ -156,6 +161,7 @@ class AuthServices:
         # Detect refresh token reuse (security: rotation attack)
         jti = old_refresh_token_decode.get('jti')
         if await self.is_token_blacklisted(jti):
+            logger.warning(f"Security Alert: Refresh token reuse detected for JTI {jti}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
                 detail="Refresh token reused. Login required."
@@ -185,6 +191,7 @@ class AuthServices:
         new_refresh_token = create_token(user_data, expiry_delta=refresh_token_expiry, type="refresh")
         
         # Return both tokens for dual-auth delivery by route layer
+        logger.info(f"Token renewed successfully for user {user.username}")
         return {
             "access_token" : new_token,
             "refresh_token": new_refresh_token
@@ -270,6 +277,8 @@ class AuthServices:
             await self.add_token_to_blocklist(access_token)
         if refresh_token:
             await self.add_token_to_blocklist(refresh_token)
+
+        logger.info(f"User logged out and tokens revoked")
 
         # Delete cookies (harmless for mobile, necessary for web)
         response.delete_cookie(key="access_token")

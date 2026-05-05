@@ -10,6 +10,9 @@ class CustomerCreate(BaseModel):
 class CustomerUpdate(BaseModel):
     name: Optional[str] = None
 
+class CustomerAddDebt(BaseModel):
+    amount: Decimal
+
 class CustomerInfo(BaseModel):
     id: uuid.UUID
     name: str

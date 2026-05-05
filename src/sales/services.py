@@ -12,7 +12,7 @@ from decimal import Decimal
 from src.auth.services import AuthServices
 from src.payments.models import Payment, SalePaymentLink
 from src.utils.pagination import PaginationParameters, SortEnum,PaginatedResponse, paginate
-
+from src.utils.logger import logger
 
 authServices = AuthServices()
 
@@ -172,8 +172,10 @@ class SaleServices:
         try:
             await session.commit()
             await session.refresh(new_sale, ["items"])
+            logger.info(f"Sale created successfully: {new_sale.id} by user {user_id}. Total: {total_amount}, Paid: {amount_applied_to_sale}")
             return new_sale
         except Exception as e:
+            logger.error(f"Failed to create sale by user {user_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -203,7 +205,8 @@ class SaleServices:
 
             return sale
         
-        except DatabaseError:
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching sale {sale_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

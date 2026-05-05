@@ -17,9 +17,11 @@ from src.config import Config
 
 
 
+from src.utils.logger import logger
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("\n---Server Started---\n")
+    logger.info("---Server Started---")
     
     # 1. Initialize Postgres
     await init_db()
@@ -30,10 +32,10 @@ async def lifespan(app: FastAPI):
     yield
     
     # 3. Clean up Redis connections on shutdown
-    print("---Closing Redis Connection---")
+    logger.info("---Closing Redis Connection---")
     if redis_client:
         await redis_client.close()
-    print("---Server Closed---")
+    logger.info("---Server Closed---")
 
 app = FastAPI(
     title="KennyFasa Bookkeeping API",
@@ -65,6 +67,11 @@ def health_check():
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code >= 500:
+        logger.error(f"Server Error {exc.status_code} on {request.method} {request.url}: {exc.detail}")
+    else:
+        logger.warning(f"HTTP {exc.status_code} on {request.method} {request.url}: {exc.detail}")
+        
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -88,12 +95,14 @@ def format_validation_errors(errors):
 
 @app.exception_handler(RequestValidationError)
 async def custom_validation_exception_handler(request:Request, exc: RequestValidationError):
+    formatted_errors = format_validation_errors(exc.errors())
+    logger.warning(f"Validation Error on {request.method} {request.url}: {formatted_errors}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={
             "success": False,
             "message": "Validation error",
-            "errors": format_validation_errors(exc.errors()),
+            "errors": formatted_errors,
             "data": None
         }
     )

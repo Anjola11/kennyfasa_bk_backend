@@ -8,6 +8,7 @@ from sqlalchemy.exc import DatabaseError
 import uuid
 from sqlalchemy.orm import selectinload
 from src.auth.services import AuthServices
+from src.utils.logger import logger
 
 authServices = AuthServices()
 
@@ -48,11 +49,12 @@ class ProductServices():
             
             # Reload the object from the database to ensure we have all generated fields (like id and created_at)
             await session.refresh(new_product,["sizes"])
-            
+            logger.info(f"Product created successfully: {new_product.id} by user {user_id}")
             return new_product
         except Exception as e:
             # If anything fails (DB connection, constraint violation), undo all changes 
             # made during this session to keep the data consistent.
+            logger.error(f"Failed to create product by user {user_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
@@ -68,7 +70,8 @@ class ProductServices():
 
             return products
         
-        except DatabaseError:
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching all products by user {user_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -83,7 +86,8 @@ class ProductServices():
             product = result.first()
             return product
         
-        except DatabaseError:
+        except DatabaseError as e:
+            logger.error(f"Database error while fetching product {product_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -105,6 +109,7 @@ class ProductServices():
             product = result.first()
 
             if not product:
+                logger.warning(f"Failed to update: Product {product_id} not found")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, 
                     detail="Product not found"
@@ -139,11 +144,12 @@ class ProductServices():
 
             await session.commit()
             await session.refresh(product,["sizes"])
+            logger.info(f"Product {product_id} updated successfully by user {user_id}")
             return product
         
         except Exception as e:
+            logger.error(f"Failed to update product {product_id}: {str(e)}", exc_info=True)
             await session.rollback()
-            print(f"[UPDATE ERROR] {type(e).__name__}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Update failed: {str(e)}"
@@ -159,6 +165,7 @@ class ProductServices():
             product = result.first()
 
             if not product:
+                logger.warning(f"Failed to delete: Product {product_id} not found")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Product not found"
@@ -166,8 +173,10 @@ class ProductServices():
 
             await session.delete(product)
             await session.commit()
+            logger.info(f"Product {product_id} deleted successfully by user {user_id}")
         
-        except DatabaseError:
+        except DatabaseError as e:
+            logger.error(f"Database error while deleting product {product_id}: {str(e)}", exc_info=True)
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

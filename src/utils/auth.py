@@ -19,6 +19,7 @@ from src.config import Config
 from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.db.redis import redis_client
+from src.utils.logger import logger
 
 
 
@@ -103,18 +104,20 @@ def decode_token(token: str) -> dict:
         )
 
     except jwt.ExpiredSignatureError:
+        logger.warning("Token decoding failed: Token has expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Token has expired"
         )
     except jwt.InvalidTokenError:
+        logger.warning("Token decoding failed: Invalid token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Invalid token."
         )
 
     except Exception as e:
-        print(f"Unexpected error: {e}") 
+        logger.error(f"Unexpected error during token decoding: {e}", exc_info=True) 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail="Something went wrong processing the token."
@@ -149,6 +152,7 @@ async def get_current_user(request: Request, bearer_token: HTTPAuthorizationCred
         token = request.cookies.get("access_token")  # Web: httponly cookie
 
     if token == None:
+        logger.warning(f"Auth failed: No credentials provided for {request.method} {request.url}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication credentials not provided"
@@ -161,6 +165,7 @@ async def get_current_user(request: Request, bearer_token: HTTPAuthorizationCred
     
     # Check if token has been revoked (logout/token rotation)
     if jti and await redis_client.get(jti):
+        logger.warning(f"Auth failed: Revoked token (JTI {jti}) used")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked (User logged out)"
@@ -177,6 +182,7 @@ async def get_current_user(request: Request, bearer_token: HTTPAuthorizationCred
     user_id = token_decoded.get("sub")
     user_role = token_decoded.get("role")
     if not user_id:
+        logger.warning("Auth failed: Token missing user ID")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token missing user ID."
@@ -198,6 +204,7 @@ def role_required(allowed_roles: list):
     """
     async def role_checker(current_user: dict = Depends(get_current_user)):
         if current_user.get("user_role") not in allowed_roles:
+            logger.warning(f"Access Denied: User {current_user.get('user_id')} with role {current_user.get('user_role')} attempted to access resource requiring {allowed_roles}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access this resource"

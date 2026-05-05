@@ -2,6 +2,8 @@
 from redis.asyncio import Redis
 from src.config import Config
 
+from src.utils.logger import logger
+
 # Initialize
 redis_client = Redis.from_url(
     Config.REDIS_URL,
@@ -11,6 +13,6 @@ redis_client = Redis.from_url(
 async def check_redis_connection():
     try:
         await redis_client.ping()
-        print("Redis connection established")
+        logger.info("Redis connection established")
     except Exception as e:
-        print(f"Redis connection failed: {e}")
+        logger.error(f"Redis connection failed: {e}")

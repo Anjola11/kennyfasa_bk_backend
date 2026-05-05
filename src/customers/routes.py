@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from src.utils.auth import get_current_user
 from src.customers.schemas import (
     CustomerCreate, CustomerResponse, CustomerListResponse,
-    CustomerUpdate,
+    CustomerUpdate, CustomerAddDebt
 )
 from src.customers.services import CustomerServices
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -113,4 +113,25 @@ async def delete_customer(
         "success": True,
         "message": "customer deleted successfully",
         "data": {}
+    }
+
+
+@customer_router.post("/{id}/add-debt", response_model=CustomerResponse, status_code=status.HTTP_200_OK)
+@limiter.limit("20/minute")
+async def add_customer_debt(
+    request: Request,
+    response: Response,
+    id: uuid.UUID,
+    debt_data: CustomerAddDebt, 
+    session: AsyncSession = Depends(get_Session),
+    user_details: dict = Depends(get_current_user)
+):
+    user_id = user_details.get("user_id")
+
+    customer = await customer_services.add_initial_debt(id, debt_data.amount, session, user_id)
+
+    return {
+        "success": True,
+        "message": "initial debt recorded successfully",
+        "data": customer
     }
